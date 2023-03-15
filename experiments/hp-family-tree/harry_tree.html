@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Harry Potter Family Tree</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <style>
+        /* Add some basic styles for the SVG and nodes */
+        svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        circle {
+            stroke: black;
+            stroke-width: 1px;
+        }
+
+        text {
+            font-family: sans-serif;
+            font-size: 12px;
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+        // The JSON object representing the family tree
+        const familyTree = {
+            nodes: [
+                { "id": "Harry Potter" },
+                { "id": "Ginny Weasley" },
+                { "id": "James Potter" },
+                { "id": "Lily Potter (née Evans)" },
+                { "id": "Arthur Weasley" },
+                { "id": "Molly Weasley (née Prewett)" },
+                { "id": "Fleamont Potter" },
+                { "id": "Euphemia Potter" },
+                { "id": "Mr. Evans" },
+                { "id": "Mrs. Evans" },
+                { "id": "Vernon Dursley" },
+                { "id": "Petunia Dursley (née Evans)" },
+                { "id": "Dudley Dursley" },
+                { "id": "James Sirius Potter" },
+                { "id": "Albus Severus Potter" },
+                { "id": "Lily Luna Potter" }
+            ],
+            links: [
+                { "source": "Harry Potter", "target": "James Potter" },
+                { "source": "Harry Potter", "target": "Lily Potter (née Evans)" },
+                { "source": "Ginny Weasley", "target": "Arthur Weasley" },
+                { "source": "Ginny Weasley", "target": "Molly Weasley (née Prewett)" },
+                { "source": "James Potter", "target": "Fleamont Potter" },
+                { "source": "James Potter", "target": "Euphemia Potter" },
+                { "source": "Lily Potter (née Evans)", "target": "Mr. Evans" },
+                { "source": "Lily Potter (née Evans)", "target": "Mrs. Evans" },
+                { "source": "Petunia Dursley (née Evans)", "target": "Mr. Evans" },
+                { "source": "Petunia Dursley (née Evans)", "target": "Mrs. Evans" },
+                { "source": "Vernon Dursley", "target": "Petunia Dursley (née Evans)" },
+                { "source": "Dudley Dursley", "target": "Vernon Dursley" },
+                { "source": "Dudley Dursley", "target": "Petunia Dursley (née Evans)" },
+                { "source": "James Sirius Potter", "target": "Harry Potter" },
+                { "source": "James Sirius Potter", "target": "Ginny Weasley" },
+                { "source": "Albus Severus Potter", "target": "Harry Potter" },
+                { "source": "Albus Severus Potter", "target": "Ginny Weasley" },
+                { "source": "Lily Luna Potter", "target": "Harry Potter" },
+                { "source": "Lily Luna Potter", "target": "Ginny Weasley" }
+            ]
+        };
+        // Change source and target from IDs to indices in the links array
+        const nodeById = new Map(familyTree.nodes.map(d => [d.id, d]));
+        familyTree.links.forEach(d => {
+            d.source = nodeById.get(d.source);
+            d.target = nodeById.get(d.target);
+        });
+
+        // Create an SVG element to hold the graph
+        const svg = d3.select("body")
+            .append("svg")
+            .attr("width", window.innerWidth)
+            .attr("height", window.innerHeight);
+
+        // Create an arrow marker definition
+        svg.append("defs").selectAll("marker")
+            .data(["end"])
+            .join("marker")
+            .attr("id", d => d)
+            .attr("viewBox", "0 -5 10 10")
+            .attr("refX", 25) // Set the distance from the end of the link
+            .attr("refY", 0)
+            .attr("markerWidth", 6)
+            .attr("markerHeight", 6)
+            .attr("orient", "auto-start-reverse")
+            .append("path")
+            .attr("d", "M0,-5L10,0L0,5")
+            .attr("fill", "black");
+
+        // Create a simulation with forces for positioning the nodes and links
+        const simulation = d3.forceSimulation(familyTree.nodes)
+            .force("link", d3.forceLink(familyTree.links).distance(100))
+            .force("charge", d3.forceManyBody().strength(-300))
+            .force("center", d3.forceCenter(window.innerWidth / 2, window.innerHeight / 2));
+
+        // Create the link elements (lines) and apply the arrow marker
+        const links = svg.selectAll("line")
+            .data(familyTree.links)
+            .join("line")
+            .attr("stroke", "black")
+            .attr("marker-end", "url(#end)"); // Apply the arrow marker
+
+        // Create the node elements (circles and labels)
+        const nodes = svg.selectAll("g")
+            .data(familyTree.nodes)
+            .join("g");
+
+        nodes.append("circle")
+            .attr("r", 20)
+            .attr("fill", "lightblue");
+
+        nodes.append("text")
+            .attr("text-anchor", "middle")
+            .attr("dy", "0.3em")
+            .text(d => d.id);
+
+        // Update the positions of the nodes and links during the simulation
+        simulation.on("tick", () => {
+            links
+                .attr("x1", d => d.source.x)
+                .attr("y1", d => d.source.y)
+                .attr("x2", d => d.target.x)
+                .attr("y2", d => d.target.y);
+
+            nodes
+                .attr("transform", d => `translate(${d.x}, ${d.y})`);
+        });
+    </script>
+</body>
+
+</html>
